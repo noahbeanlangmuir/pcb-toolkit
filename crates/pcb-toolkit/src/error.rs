@@ -26,4 +26,14 @@ pub enum CalcError {
 
     #[error("insufficient inputs: {0}")]
     InsufficientInputs(&'static str),
+
+    /// The inputs were individually valid, but the model produced a result that
+    /// cannot be physical — typically because the geometry falls outside the
+    /// formula's range of validity.
+    #[error("unphysical result: {name} = {value} ({reason})")]
+    UnphysicalResult {
+        name: &'static str,
+        value: f64,
+        reason: &'static str,
+    },
 }

@@ -4,6 +4,14 @@
 //!
 //! Z0 = (60 / √Er) × ln(1.9 × (2H + T) / (0.8W + T))
 //! Er_eff = Er  (fully embedded in dielectric, no air interface)
+//!
+//! # Range of validity
+//!
+//! This closed form is accurate for `W/(2H − T) < 0.35`. Outside that range it
+//! progressively overestimates the fringing term, and for a sufficiently wide trace the
+//! logarithm's argument falls below 1 and Zo goes negative. Such geometries are rejected
+//! by the shared post-condition in [`common::finish`] rather than returning a negative
+//! impedance, but values approaching the limit should be treated as approximate.
 
 use crate::CalcError;
 use crate::impedance::{common, types::ImpedanceResult};
@@ -37,6 +45,9 @@ pub fn calculate(input: &StriplineInput) -> Result<ImpedanceResult, CalcError> {
     if height <= 0.0 {
         return Err(CalcError::NegativeDimension { name: "height", value: height });
     }
+    if thickness < 0.0 {
+        return Err(CalcError::NegativeDimension { name: "thickness", value: thickness });
+    }
     if er < 1.0 {
         return Err(CalcError::OutOfRange {
             name: "er",
@@ -51,17 +62,7 @@ pub fn calculate(input: &StriplineInput) -> Result<ImpedanceResult, CalcError> {
     // For stripline, er_eff = er (trace fully embedded in dielectric)
     let er_eff = er;
 
-    let tpd = common::propagation_delay(er_eff);
-    let lo = common::inductance_per_length(zo, tpd);
-    let co = common::capacitance_per_length(zo, tpd);
-
-    Ok(ImpedanceResult {
-        zo,
-        er_eff,
-        tpd_ps_per_in: tpd,
-        lo_nh_per_in: lo,
-        co_pf_per_in: co,
-    })
+    common::finish(zo, er_eff, er)
 }
 
 #[cfg(test)]
@@ -159,5 +160,43 @@ mod tests {
             er: 0.5,
         });
         assert!(result.is_err());
+    }
+
+    /// A sufficiently wide trace drives the logarithm's argument below 1, making Zo
+    /// negative. That previously reached the caller as a negative impedance (and a
+    /// negative Lo) with no error. See VALIDATION.md finding H2.
+    #[test]
+    fn rejects_geometry_that_would_give_negative_impedance() {
+        let r = calculate(&StriplineInput {
+            width: 100.0,
+            height: 20.0,
+            thickness: 1.4,
+            er: 4.6,
+        });
+        assert!(r.is_err(), "w=100/h=20 should be rejected, got {r:?}");
+    }
+
+    /// Within the formula's validity range Zo must stay positive and fall with width.
+    #[test]
+    fn impedance_positive_and_decreasing_within_validity() {
+        let mut previous = f64::INFINITY;
+        for width in [5.0, 10.0, 14.0] {
+            let r = calculate(&StriplineInput { width, height: 20.0, thickness: 1.4, er: 4.6 })
+                .unwrap();
+            assert!(r.zo > 0.0, "w={width} gave Zo={}", r.zo);
+            assert!(r.zo < previous, "Zo must fall with width: {} !< {previous}", r.zo);
+            previous = r.zo;
+        }
+    }
+
+    #[test]
+    fn rejects_negative_thickness() {
+        let r = calculate(&StriplineInput {
+            width: 10.0,
+            height: 20.0,
+            thickness: -1.0,
+            er: 4.6,
+        });
+        assert!(r.is_err());
     }
 }

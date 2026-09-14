@@ -100,14 +100,17 @@ mod tests {
         EdgeCoupledEmbeddedInput { width, spacing, height, thickness, er, cover_height }
     }
 
-    /// With cover_height=0, embedded base Z0 equals the Hammerstad-Jensen surface
-    /// microstrip Z0 (~75.80 Ω). The external edge-coupled calculator uses the IPC-2141
-    /// approximation formula instead (~77.50 Ω), so the two paths diverge slightly.
-    /// At cover=0 with W=10, S=5, H=15, T=2.10, Er=4.6 the Zdiff is ~95.76.
+    /// With cover_height=0, the embedded base Z0 is the surface microstrip Z0.
+    ///
+    /// Re-baselined 2026-09-14 (95.76 → 101.17) when `impedance::microstrip` was
+    /// corrected to true Hammerstad-Jensen: the old expectation derived from a surface
+    /// Z0 of ~75.80 Ω, which was ~5% low. H-J now gives 77.65 Ω, against the IPC-2141
+    /// value of 77.50 Ω used by `edge_coupled_external` — so the two paths that this
+    /// test compares have converged from ~2.2% apart to ~0.19%. See VALIDATION.md C1.
     #[test]
     fn zero_cover_matches_external() {
         let result = calculate(&input(10.0, 5.0, 15.0, 2.10, 4.6, 0.0)).unwrap();
-        assert_relative_eq!(result.zdiff, 95.76, max_relative = 0.005);
+        assert_relative_eq!(result.zdiff, 101.17, max_relative = 0.005);
     }
 
     /// Deeper burial reduces the single-ended Z0 through the exp correction factor.

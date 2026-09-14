@@ -1,0 +1,33 @@
+[package]
+name = "pcb-toolkit-desktop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+description = "Desktop GUI for the pcb-toolkit PCB design calculators"
+publish = false
+
+[lib]
+name = "pcb_toolkit_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+# Switches Tauri from the `devUrl` dev server to the frontend bundle embedded at
+# compile time. The Tauri CLI passes this for production builds; without it a release
+# binary still tries to load http://localhost and shows a connection error.
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+pcb-toolkit = { workspace = true }
+tauri = { version = "2", features = [] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

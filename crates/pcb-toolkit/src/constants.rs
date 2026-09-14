@@ -10,6 +10,10 @@ pub const SPEED_OF_LIGHT_IN_NS: f64 = 11.803;
 /// Permeability of free space µ₀ (H/m).
 pub const MU_0: f64 = 1.256_637_061_435_9e-6;
 
+/// Free-space wave impedance η₀ = µ₀·c (Ω). Used by the Hammerstad-Jensen
+/// air-microstrip impedance Z01(u).
+pub const ETA_0: f64 = 376.730_313_668;
+
 /// Permittivity of free space ε₀ (F/m).
 pub const EPSILON_0: f64 = 8.854_187_817e-12;
 

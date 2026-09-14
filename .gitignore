@@ -25,3 +25,7 @@ target
 __pycache__/
 
 /toolkit/
+# Desktop app (Tauri + Vite)
+node_modules/
+apps/desktop/dist/
+apps/desktop/src-tauri/gen/

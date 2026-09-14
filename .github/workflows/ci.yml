@@ -25,6 +25,34 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      # The desktop app (apps/desktop/src-tauri) is a workspace member, so a
+      # workspace-wide build needs Tauri's Linux WebKit dependencies.
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev \
+            patchelf
+
+      # tauri-build requires the frontend bundle to exist at the configured
+      # frontendDist before the Rust crate will compile.
+      - name: Build desktop frontend
+        working-directory: apps/desktop
+        run: |
+          npm ci
+          npm run build
+
       - name: Build workspace
         run: cargo build --workspace --verbose
 

@@ -356,15 +356,22 @@ L=1mH, C=220pF → f_res = 339.32 kHz
 L=50µH, C=100pF → f_res = 2.251 MHz
 ```
 
-### Attenuators — Pi-pad at 50Ω [Electronics Notes]
+### Attenuators — Pi-pad at 50Ω [CALC, standard matched-attenuator formulas]
+
+**Corrected 2026-09-14.** The series column previously listed here (2.9 / 8.5 / 16.6 /
+26.0 / 40.9) was a duplicate of the T-pad series column below — Pi and T pads do not
+share a series arm. That error was transcribed into `ohms_law::pi_pad`, which used the
+T-pad formula, and into the tests that asserted it. See VALIDATION.md finding C2.
+
+Series arm = `Z·(K²−1)/(2K)`, shunt arm = `Z·(K+1)/(K−1)`, with `K = 10^(dB/20)`.
 
 ```
  dB | R1(series) | R2(shunt)
-  1 |    2.9 Ω   |  870 Ω
-  3 |    8.5 Ω   |  292 Ω
-  6 |   16.6 Ω   |  151 Ω
- 10 |   26.0 Ω   |   96.2 Ω
- 20 |   40.9 Ω   |   61.1 Ω
+  1 |    5.77 Ω  |  869.5 Ω
+  3 |   17.61 Ω  |  292.4 Ω
+  6 |   37.35 Ω  |  150.5 Ω
+ 10 |   71.15 Ω  |   96.2 Ω
+ 20 |  247.50 Ω  |   61.1 Ω
 ```
 
 ### Attenuators — T-pad at 50Ω [Electronics Notes]

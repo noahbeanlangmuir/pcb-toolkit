@@ -322,7 +322,9 @@ pub fn pi_pad(attenuation_db: f64, z_ohm: f64) -> Result<AttenuatorResult, CalcE
 
     let k = 10.0_f64.powf(attenuation_db / 20.0);
     let r_shunt_ohm = z_ohm * (k + 1.0) / (k - 1.0);
-    let r_series_ohm = z_ohm * (k - 1.0) / (k + 1.0);
+    // Pi-pad series arm: Z·(K²−1)/(2K). NOT Z·(K−1)/(K+1) — that is the T-pad
+    // series formula, which this function previously used.
+    let r_series_ohm = z_ohm * (k * k - 1.0) / (2.0 * k);
 
     Ok(AttenuatorResult {
         attenuation_db,
@@ -406,28 +408,49 @@ mod tests {
         assert_relative_eq!(result.power_w, 0.1, epsilon = 1e-8);
     }
 
-    // Pi-pad 1dB, 50Ω: R_series≈2.9Ω, R_shunt≈870Ω
+    // Pi-pad, 50Ω. Series arm = Z·(K²−1)/(2K), shunt arm = Z·(K+1)/(K−1).
+    // K = 10^(dB/20). Computed from the standard matched-attenuator formulas.
+    //   1 dB: K=1.122018 -> series 5.7692, shunt 869.5482
     #[test]
     fn pi_pad_1db_50ohm() {
         let result = pi_pad(1.0, 50.0).unwrap();
-        assert_relative_eq!(result.r_series_ohm, 2.88, epsilon = 0.01);
-        assert_relative_eq!(result.r_shunt_ohm, 869.5, epsilon = 0.5);
+        assert_relative_eq!(result.r_series_ohm, 5.7692, epsilon = 0.001);
+        assert_relative_eq!(result.r_shunt_ohm, 869.5482, epsilon = 0.001);
     }
 
-    // Pi-pad 10dB, 50Ω: R_series≈26.0Ω, R_shunt≈96.2Ω
+    //  10 dB: K=3.162278 -> series 71.1512, shunt 96.2475
     #[test]
     fn pi_pad_10db_50ohm() {
         let result = pi_pad(10.0, 50.0).unwrap();
-        assert_relative_eq!(result.r_series_ohm, 25.97, epsilon = 0.02);
-        assert_relative_eq!(result.r_shunt_ohm, 96.25, epsilon = 0.05);
+        assert_relative_eq!(result.r_series_ohm, 71.1512, epsilon = 0.001);
+        assert_relative_eq!(result.r_shunt_ohm, 96.2475, epsilon = 0.001);
     }
 
-    // T-pad 10dB, 50Ω: R_series≈26.0Ω, R_shunt≈35.1Ω
+    // T-pad, 50Ω. Series arm = Z·(K−1)/(K+1), shunt arm = 2ZK/(K²−1).
+    //  10 dB: K=3.162278 -> series 25.9747, shunt 35.1364
     #[test]
     fn t_pad_10db_50ohm() {
         let result = t_pad(10.0, 50.0).unwrap();
-        assert_relative_eq!(result.r_series_ohm, 25.97, epsilon = 0.02);
-        assert_relative_eq!(result.r_shunt_ohm, 35.14, epsilon = 0.02);
+        assert_relative_eq!(result.r_series_ohm, 25.9747, epsilon = 0.001);
+        assert_relative_eq!(result.r_shunt_ohm, 35.1364, epsilon = 0.001);
+    }
+
+    /// Regression guard for the defect this replaced: `pi_pad` previously used the
+    /// T-pad series formula, so both topologies returned an identical series arm.
+    #[test]
+    fn pi_and_t_pad_series_arms_differ() {
+        for db in [1.0, 3.0, 6.0, 10.0, 20.0] {
+            let pi = pi_pad(db, 50.0).unwrap();
+            let t = t_pad(db, 50.0).unwrap();
+            assert!(
+                (pi.r_series_ohm - t.r_series_ohm).abs() > 1e-6,
+                "Pi and T series arms must differ at {db} dB: {} vs {}",
+                pi.r_series_ohm,
+                t.r_series_ohm
+            );
+        }
+        // At 20 dB the two differ by ~6x — the largest divergence in the audited range.
+        assert_relative_eq!(pi_pad(20.0, 50.0).unwrap().r_series_ohm, 247.5, epsilon = 0.001);
     }
 
     #[test]

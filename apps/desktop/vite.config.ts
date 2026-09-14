@@ -1,0 +1,14 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// Tauri expects a fixed port and does its own watching of src-tauri.
+export default defineConfig({
+  plugins: [react()],
+  clearScreen: false,
+  server: {
+    port: 5183,
+    strictPort: true,
+    watch: { ignored: ["**/src-tauri/**"] },
+  },
+  build: { outDir: "dist", emptyOutDir: true, target: "esnext" },
+});

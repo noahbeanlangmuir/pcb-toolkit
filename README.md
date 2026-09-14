@@ -8,10 +8,23 @@ output where possible.
 
 ## Workspace
 
-| Crate             | Description                                                   |
-| ----------------- | ------------------------------------------------------------- |
-| `pcb-toolkit`     | Core library: calculators, material database, unit conversion |
-| `pcb-toolkit-cli` | Command-line interface wrapping the library                   |
+| Crate                   | Description                                                   |
+| ----------------------- | ------------------------------------------------------------- |
+| `pcb-toolkit`           | Core library: calculators, material database, unit conversion |
+| `pcb-toolkit-cli`       | Command-line interface wrapping the library                   |
+| `pcb-toolkit-desktop`   | Tauri desktop GUI ([`apps/desktop`](apps/desktop))            |
+
+## Desktop app
+
+A GUI covering all 37 calculators lives in [`apps/desktop`](apps/desktop):
+
+```
+cd apps/desktop
+npm install
+npm run tauri dev
+```
+
+See [`apps/desktop/README.md`](apps/desktop/README.md) for building installers.
 
 ## Building
 
@@ -57,11 +70,11 @@ $ pcb-toolkit impedance microstrip -w 10 --height 5 --er 4.6
 
 Microstrip Impedance
 ────────────────────
-  Zo      = 44.3599 Ω
-  Er_eff  = 3.5172
-  Tpd     = 158.8927 ps/in
-  Lo      = 7.0485 nH/in
-  Co      = 3.5819 pF/in
+  Zo      = 44.8322 Ω
+  Er_eff  = 3.3075
+  Tpd     = 154.0839 ps/in
+  Lo      = 6.9079 nH/in
+  Co      = 3.4369 pF/in
 ```
 
 ```
@@ -93,11 +106,11 @@ PDN Impedance
 $ pcb-toolkit --json impedance microstrip -w 10 --height 5 --er 4.6
 
 {
-  "zo": 44.359895838626485,
-  "er_eff": 3.5171650243068555,
-  "tpd_ps_per_in": 158.89270763232736,
-  "lo_nh_per_in": 7.048463960087373,
-  "co_pf_per_in": 3.581899926238581
+  "zo": 44.83223672585572,
+  "er_eff": 3.307496138618307,
+  "tpd_ps_per_in": 154.08390124056288,
+  "lo_nh_per_in": 6.907925936060289,
+  "co_pf_per_in": 3.436899706404774
 }
 ```
 
